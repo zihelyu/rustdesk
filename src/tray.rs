@@ -63,13 +63,13 @@ fn make_tray() -> hbb_common::ResultType<()> {
         if count == 0 {
             format!(
                 "{} {}",
-                crate::get_app_name(),
+                "梓晨远程",
                 translate("Service is running".to_owned()),
             )
         } else {
             format!(
                 "{} - {}\n{}",
-                crate::get_app_name(),
+                "梓晨远程",
                 translate("Ready".to_owned()),
                 translate("{".to_string() + &format!("{count}") + "} sessions"),
             )

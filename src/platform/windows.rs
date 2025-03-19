@@ -1252,7 +1252,7 @@ oLink.Save
     let mut shortcuts = Default::default();
     if options.contains("desktopicon") {
         shortcuts = format!(
-            "copy /Y \"{}\\{}.lnk\" \"%PUBLIC%\\Desktop\\\"",
+            "copy /Y \"{}\\{}.lnk\" \"%PUBLIC%\\Desktop\\梓晨远程.lnk\"",
             tmp_path,
             crate::get_app_name()
         );
