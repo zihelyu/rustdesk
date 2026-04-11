@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "Purslane Ltd" "\0"
-            VALUE "FileDescription", "RustDesk Remote Desktop" "\0"
+            VALUE "CompanyName", "山东梓晨网络科技有限公司" "\0"
+            VALUE "FileDescription", "梓晨远程" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "rustdesk" "\0"
-            VALUE "LegalCopyright", "Copyright © 2025 Purslane Ltd. All rights reserved." "\0"
-            VALUE "OriginalFilename", "rustdesk.exe" "\0"
-            VALUE "ProductName", "RustDesk" "\0"
+            VALUE "InternalName", "梓晨远程" "\0"
+            VALUE "LegalCopyright", "Copyright © 2025 山东梓晨网络科技有限公司. All rights reserved." "\0"
+            VALUE "OriginalFilename", "梓晨远程.exe" "\0"
+            VALUE "ProductName", "梓晨远程" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

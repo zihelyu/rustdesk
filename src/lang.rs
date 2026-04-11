@@ -181,6 +181,7 @@ pub fn translate_locale(name: String, locale: &str) -> String {
         if let Some(value) = placeholder_value.as_ref() {
             s = s.replace("{}", &value);
         }
+        s = s.replace("RustDesk", "梓晨远程");
         if !crate::is_rustdesk() {
             if s.contains("RustDesk")
                 && !name.starts_with("upgrade_rustdesk_server_pro")

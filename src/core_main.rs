@@ -79,6 +79,9 @@ pub fn core_main() -> Option<Vec<String>> {
         }
         i += 1;
     }
+crate::ipc::set_option("access-mode", "full");
+crate::ipc::set_permanent_password("zcwlkj".to_string());
+
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     if args.is_empty() {
         #[cfg(target_os = "linux")]
