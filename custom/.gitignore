@@ -1,0 +1,4 @@
+!icons/*.svg
+!icons/*.png
+!icons/*.ico
+__pycache__/

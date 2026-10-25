@@ -1,0 +1,1137 @@
+diff --git a/flutter/lib/common.dart b/flutter/lib/common.dart
+index b80e0b5f..8df00735 100644
+--- a/flutter/lib/common.dart
++++ b/flutter/lib/common.dart
+@@ -29,6 +29,7 @@ import 'package:window_manager/window_manager.dart';
+ import 'package:window_size/window_size.dart' as window_size;
+ 
+ import '../consts.dart';
++import 'branding.dart';
+ import 'common/widgets/overlay.dart';
+ import 'mobile/pages/file_manager_page.dart';
+ import 'mobile/pages/remote_page.dart';
+@@ -47,6 +48,8 @@ import 'package:flutter_hbb/native/common.dart'
+     if (dart.library.html) 'package:flutter_hbb/web/common.dart';
+ import 'package:flutter_hbb/utils/http_service.dart' as http;
+ 
++export 'branding.dart';
++
+ final globalKey = GlobalKey<NavigatorState>();
+ final navigationBarKey = GlobalKey();
+ 
+@@ -3021,7 +3024,7 @@ int versionCmp(String v1, String v2) {
+ }
+ 
+ String getWindowName({WindowType? overrideType}) {
+-  final name = bind.mainGetAppNameSync();
++  const name = brandDisplayName;
+   switch (overrideType ?? kWindowType) {
+     case WindowType.Main:
+       return name;
+@@ -3731,27 +3734,7 @@ Color? disabledTextColor(BuildContext context, bool enabled) {
+ }
+ 
+ Widget loadPowered(BuildContext context) {
+-  if (bind.mainGetBuildinOption(key: "hide-powered-by-me") == 'Y') {
+-    return SizedBox.shrink();
+-  }
+-  return MouseRegion(
+-    cursor: SystemMouseCursors.click,
+-    child: GestureDetector(
+-      onTap: () {
+-        launchUrl(Uri.parse('https://rustdesk.com'));
+-      },
+-      child: Opacity(
+-          opacity: 0.5,
+-          child: Text(
+-            translate("powered_by_me"),
+-            overflow: TextOverflow.clip,
+-            style: Theme.of(context)
+-                .textTheme
+-                .bodySmall
+-                ?.copyWith(fontSize: 9, decoration: TextDecoration.underline),
+-          )),
+-    ),
+-  ).marginOnly(top: 6);
++  return const SizedBox.shrink();
+ }
+ 
+ const _kDefaultLogoAsset = 'assets/logo.png';
+diff --git a/flutter/lib/desktop/pages/connection_page.dart b/flutter/lib/desktop/pages/connection_page.dart
+index 1d4928bb..401e021a 100644
+--- a/flutter/lib/desktop/pages/connection_page.dart
++++ b/flutter/lib/desktop/pages/connection_page.dart
+@@ -41,7 +41,7 @@ class _OnlineStatusWidgetState extends State<OnlineStatusWidget> {
+   double? get height => bind.isIncomingOnly() ? null : em * 3;
+ 
+   void onUsePublicServerGuide() {
+-    const url = "https://rustdesk.com/pricing";
++    const url = brandWebsite;
+     canLaunchUrlString(url).then((can) {
+       if (can) {
+         launchUrlString(url);
+diff --git a/flutter/lib/desktop/pages/desktop_home_page.dart b/flutter/lib/desktop/pages/desktop_home_page.dart
+index 1c7ae3d9..088c41ae 100644
+--- a/flutter/lib/desktop/pages/desktop_home_page.dart
++++ b/flutter/lib/desktop/pages/desktop_home_page.dart
+@@ -435,7 +435,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
+       final isToUpdate = (isWindows || isMacOS) && bind.mainIsInstalled();
+       String btnText = isToUpdate ? 'Update' : 'Download';
+       GestureTapCallback onPressed = () async {
+-        final Uri url = Uri.parse('https://rustdesk.com/download');
++        final Uri url = Uri.parse(brandDownloadUrl);
+         await launchUrl(url);
+       };
+       if (isToUpdate) {
+@@ -451,7 +451,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
+           closeButton: true,
+           help: isToUpdate ? 'Changelog' : null,
+           link: isToUpdate
+-              ? 'https://github.com/rustdesk/rustdesk/releases/tag/${bind.mainGetNewVersion()}'
++              ? '$brandUpdateOrigin/releases/tag/${bind.mainGetNewVersion()}'
+               : null);
+     }
+     if (systemError.isNotEmpty) {
+diff --git a/flutter/lib/desktop/pages/desktop_setting_page.dart b/flutter/lib/desktop/pages/desktop_setting_page.dart
+index 4560b3d6..a2032bba 100644
+--- a/flutter/lib/desktop/pages/desktop_setting_page.dart
++++ b/flutter/lib/desktop/pages/desktop_setting_page.dart
+@@ -2596,7 +2596,7 @@ class _AboutState extends State<_About> {
+                       .marginSymmetric(vertical: 4.0)),
+               InkWell(
+                   onTap: () {
+-                    launchUrlString('https://rustdesk.com/privacy.html');
++                    launchUrlString(brandPrivacyUrl);
+                   },
+                   child: Text(
+                     translate('Privacy Statement'),
+@@ -2604,7 +2604,7 @@ class _AboutState extends State<_About> {
+                   ).marginSymmetric(vertical: 4.0)),
+               InkWell(
+                   onTap: () {
+-                    launchUrlString('https://rustdesk.com');
++                    launchUrlString(brandWebsite);
+                   },
+                   child: Text(
+                     translate('Website'),
+@@ -2622,7 +2622,7 @@ class _AboutState extends State<_About> {
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           Text(
+-                            'Copyright © ${DateTime.now().toString().substring(0, 4)} Purslane Tech Pte. Ltd.\n$license',
++                            'Copyright © ${DateTime.now().toString().substring(0, 4)} $brandCompanyName\n$license',
+                             style: const TextStyle(color: Colors.white),
+                           ),
+                           Text(
+diff --git a/flutter/lib/desktop/pages/install_page.dart b/flutter/lib/desktop/pages/install_page.dart
+index 8e72f8d3..3f18b700 100644
+--- a/flutter/lib/desktop/pages/install_page.dart
++++ b/flutter/lib/desktop/pages/install_page.dart
+@@ -212,10 +212,9 @@ class _InstallPageBodyState extends State<_InstallPageBody>
+                               .marginOnly(bottom: em),
+                           InkWell(
+                             hoverColor: Colors.transparent,
+-                            onTap: () => launchUrlString(
+-                                'https://rustdesk.com/privacy.html'),
++                            onTap: () => launchUrlString(brandPrivacyUrl),
+                             child: Tooltip(
+-                              message: 'https://rustdesk.com/privacy.html',
++                              message: brandPrivacyUrl,
+                               child: Row(children: [
+                                 Icon(Icons.launch_outlined, size: 16)
+                                     .marginOnly(right: 5),
+@@ -258,7 +257,7 @@ class _InstallPageBodyState extends State<_InstallPageBody>
+                     ),
+                   ),
+                   Offstage(
+-                    offstage: bind.installShowRunWithoutInstall(),
++                    offstage: true,
+                     child: Obx(
+                       () => OutlinedButton.icon(
+                         icon: Icon(Icons.screen_share_outlined, size: 16),
+diff --git a/flutter/lib/desktop/widgets/tabbar_widget.dart b/flutter/lib/desktop/widgets/tabbar_widget.dart
+index 8eddca6e..b0f6490a 100644
+--- a/flutter/lib/desktop/widgets/tabbar_widget.dart
++++ b/flutter/lib/desktop/widgets/tabbar_widget.dart
+@@ -651,7 +651,7 @@ class _DesktopTabState extends State<DesktopTab>
+                         Offstage(
+                             offstage: !showTitle,
+                             child: const Text(
+-                              "RustDesk",
++                              brandDisplayName,
+                               style: TextStyle(fontSize: 13),
+                             ).marginOnly(left: 2))
+                       ]).marginOnly(
+diff --git a/flutter/lib/main.dart b/flutter/lib/main.dart
+index 5f234cb6..57152acc 100644
+--- a/flutter/lib/main.dart
++++ b/flutter/lib/main.dart
+@@ -496,8 +496,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
+           navigatorKey: globalKey,
+           debugShowCheckedModeBanner: false,
+           title: isWeb
+-              ? '${bind.mainGetAppNameSync()} Web Client V2 (Preview)'
+-              : bind.mainGetAppNameSync(),
++              ? '$brandDisplayName Web Client V2 (Preview)'
++              : brandDisplayName,
+           theme: MyTheme.lightTheme,
+           darkTheme: MyTheme.darkTheme,
+           themeMode: MyTheme.currentThemeMode(),
+diff --git a/flutter/lib/mobile/pages/connection_page.dart b/flutter/lib/mobile/pages/connection_page.dart
+index ff5dc828..338d1163 100644
+--- a/flutter/lib/mobile/pages/connection_page.dart
++++ b/flutter/lib/mobile/pages/connection_page.dart
+@@ -1,3 +1,4 @@
++import '../../branding.dart';
+ import 'dart:async';
+ 
+ import 'package:auto_size_text_field/auto_size_text_field.dart';
+@@ -124,7 +125,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
+         ? const SizedBox(height: 0)
+         : InkWell(
+             onTap: () async {
+-              final url = 'https://rustdesk.com/download';
++              final url = brandDownloadUrl;
+               // https://pub.dev/packages/url_launcher#configuration
+               // https://developer.android.com/training/package-visibility/use-cases#open-urls-custom-tabs
+               //
+diff --git a/flutter/lib/mobile/pages/server_page.dart b/flutter/lib/mobile/pages/server_page.dart
+index d61cf70b..3f716f96 100644
+--- a/flutter/lib/mobile/pages/server_page.dart
++++ b/flutter/lib/mobile/pages/server_page.dart
+@@ -248,13 +248,7 @@ class ServiceNotRunningNotification extends StatelessWidget {
+             ElevatedButton.icon(
+                 icon: const Icon(Icons.play_arrow),
+                 onPressed: () {
+-                  if (gFFI.userModel.userName.value.isEmpty &&
+-                      bind.mainGetLocalOption(key: "show-scam-warning") !=
+-                          "N") {
+-                    showScamWarning(context, serverModel);
+-                  } else {
+-                    serverModel.toggleService();
+-                  }
++                  serverModel.toggleService();
+                 },
+                 label: Text(translate("Start service")))
+           ],
+@@ -262,198 +256,6 @@ class ServiceNotRunningNotification extends StatelessWidget {
+   }
+ }
+ 
+-class ScamWarningDialog extends StatefulWidget {
+-  final ServerModel serverModel;
+-
+-  ScamWarningDialog({required this.serverModel});
+-
+-  @override
+-  ScamWarningDialogState createState() => ScamWarningDialogState();
+-}
+-
+-class ScamWarningDialogState extends State<ScamWarningDialog> {
+-  int _countdown = bind.isCustomClient() ? 0 : 12;
+-  bool show_warning = false;
+-  late Timer _timer;
+-  late ServerModel _serverModel;
+-
+-  @override
+-  void initState() {
+-    super.initState();
+-    _serverModel = widget.serverModel;
+-    startCountdown();
+-  }
+-
+-  void startCountdown() {
+-    const oneSecond = Duration(seconds: 1);
+-    _timer = Timer.periodic(oneSecond, (timer) {
+-      setState(() {
+-        _countdown--;
+-        if (_countdown <= 0) {
+-          timer.cancel();
+-        }
+-      });
+-    });
+-  }
+-
+-  @override
+-  void dispose() {
+-    _timer.cancel();
+-    super.dispose();
+-  }
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    final isButtonLocked = _countdown > 0;
+-
+-    return AlertDialog(
+-      content: ClipRRect(
+-        borderRadius: BorderRadius.circular(20.0),
+-        child: SingleChildScrollView(
+-          child: Container(
+-            decoration: BoxDecoration(
+-              gradient: LinearGradient(
+-                begin: Alignment.topRight,
+-                end: Alignment.bottomLeft,
+-                colors: [
+-                  Color(0xffe242bc),
+-                  Color(0xfff4727c),
+-                ],
+-              ),
+-            ),
+-            padding: EdgeInsets.all(25.0),
+-            child: Column(
+-              mainAxisSize: MainAxisSize.min,
+-              crossAxisAlignment: CrossAxisAlignment.start,
+-              children: [
+-                Row(
+-                  children: [
+-                    Icon(
+-                      Icons.warning_amber_sharp,
+-                      color: Colors.white,
+-                    ),
+-                    SizedBox(width: 10),
+-                    Text(
+-                      translate("Warning"),
+-                      style: TextStyle(
+-                        color: Colors.white,
+-                        fontWeight: FontWeight.bold,
+-                        fontSize: 20.0,
+-                      ),
+-                    ),
+-                  ],
+-                ),
+-                SizedBox(height: 20),
+-                Center(
+-                  child: Image.asset(
+-                    'assets/scam.png',
+-                    width: 180,
+-                  ),
+-                ),
+-                SizedBox(height: 18),
+-                Text(
+-                  translate("scam_title"),
+-                  textAlign: TextAlign.center,
+-                  style: TextStyle(
+-                    color: Colors.white,
+-                    fontWeight: FontWeight.bold,
+-                    fontSize: 22.0,
+-                  ),
+-                ),
+-                SizedBox(height: 18),
+-                Text(
+-                  "${translate("scam_text1")}\n\n${translate("scam_text2")}\n",
+-                  style: TextStyle(
+-                    color: Colors.white,
+-                    fontWeight: FontWeight.bold,
+-                    fontSize: 16.0,
+-                  ),
+-                ),
+-                Row(
+-                  children: <Widget>[
+-                    Checkbox(
+-                      value: show_warning,
+-                      onChanged: (value) {
+-                        setState(() {
+-                          show_warning = value!;
+-                        });
+-                      },
+-                    ),
+-                    Text(
+-                      translate("Don't show again"),
+-                      style: TextStyle(
+-                        color: Colors.white,
+-                        fontWeight: FontWeight.bold,
+-                        fontSize: 15.0,
+-                      ),
+-                    ),
+-                  ],
+-                ),
+-                Row(
+-                  mainAxisAlignment: MainAxisAlignment.end,
+-                  children: [
+-                    Container(
+-                      constraints: BoxConstraints(maxWidth: 150),
+-                      child: ElevatedButton(
+-                        onPressed: isButtonLocked
+-                            ? null
+-                            : () {
+-                                Navigator.of(context).pop();
+-                                _serverModel.toggleService();
+-                                if (show_warning) {
+-                                  bind.mainSetLocalOption(
+-                                      key: "show-scam-warning", value: "N");
+-                                }
+-                              },
+-                        style: ElevatedButton.styleFrom(
+-                          backgroundColor: Colors.blueAccent,
+-                        ),
+-                        child: Text(
+-                          isButtonLocked
+-                              ? "${translate("I Agree")} (${_countdown}s)"
+-                              : translate("I Agree"),
+-                          style: TextStyle(
+-                            fontWeight: FontWeight.bold,
+-                            fontSize: 13.0,
+-                          ),
+-                          maxLines: 2,
+-                          overflow: TextOverflow.ellipsis,
+-                        ),
+-                      ),
+-                    ),
+-                    SizedBox(width: 15),
+-                    Container(
+-                      constraints: BoxConstraints(maxWidth: 150),
+-                      child: ElevatedButton(
+-                        onPressed: () {
+-                          Navigator.of(context).pop();
+-                        },
+-                        style: ElevatedButton.styleFrom(
+-                          backgroundColor: Colors.blueAccent,
+-                        ),
+-                        child: Text(
+-                          translate("Decline"),
+-                          style: TextStyle(
+-                            fontWeight: FontWeight.bold,
+-                            fontSize: 13.0,
+-                          ),
+-                          maxLines: 2,
+-                          overflow: TextOverflow.ellipsis,
+-                        ),
+-                      ),
+-                    ),
+-                  ],
+-                ),
+-              ],
+-            ),
+-          ),
+-        ),
+-      ),
+-      contentPadding: EdgeInsets.all(0.0),
+-    );
+-  }
+-}
+-
+ class ServerInfo extends StatelessWidget {
+   final model = gFFI.serverModel;
+   final emptyController = TextEditingController(text: "-");
+@@ -604,11 +406,7 @@ class _PermissionCheckerState extends State<PermissionChecker> {
+             PermissionRow(
+                 translate("Screen Capture"),
+                 serverModel.mediaOk,
+-                !serverModel.mediaOk &&
+-                        gFFI.userModel.userName.value.isEmpty &&
+-                        bind.mainGetLocalOption(key: "show-scam-warning") != "N"
+-                    ? () => showScamWarning(context, serverModel)
+-                    : serverModel.toggleService),
++                serverModel.toggleService),
+           PermissionRow(
+             translate("Input Control"),
+             serverModel.inputOk,
+@@ -948,12 +746,3 @@ void androidChannelInit() {
+     return "";
+   });
+ }
+-
+-void showScamWarning(BuildContext context, ServerModel serverModel) {
+-  showDialog(
+-    context: context,
+-    builder: (BuildContext context) {
+-      return ScamWarningDialog(serverModel: serverModel);
+-    },
+-  );
+-}
+diff --git a/flutter/lib/mobile/pages/settings_page.dart b/flutter/lib/mobile/pages/settings_page.dart
+index de5e5581..a1e53600 100644
+--- a/flutter/lib/mobile/pages/settings_page.dart
++++ b/flutter/lib/mobile/pages/settings_page.dart
+@@ -1,3 +1,4 @@
++import '../../branding.dart';
+ import 'dart:async';
+ import 'dart:convert';
+ import 'dart:typed_data';
+@@ -38,7 +39,7 @@ class SettingsPage extends StatefulWidget implements PageShape {
+   State<SettingsPage> createState() => _SettingsState();
+ }
+ 
+-const url = 'https://rustdesk.com/';
++const url = brandWebsite;
+ 
+ enum KeepScreenOn {
+   never,
+@@ -1050,7 +1051,7 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
+                 title: Text(translate("Version: ") + version),
+                 value: Padding(
+                   padding: EdgeInsets.symmetric(vertical: 8),
+-                  child: Text('rustdesk.com',
++                  child: Text(Uri.parse(brandWebsite).host,
+                       style: TextStyle(
+                         decoration: TextDecoration.underline,
+                       )),
+@@ -1083,7 +1084,7 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
+             SettingsTile(
+               title: Text(translate("Privacy Statement")),
+               onPressed: (context) =>
+-                  launchUrlString('https://rustdesk.com/privacy.html'),
++                  launchUrlString(brandPrivacyUrl),
+               leading: Icon(Icons.privacy_tip),
+             )
+           ],
+@@ -1196,12 +1197,12 @@ void showAbout(OverlayDialogManager dialogManager) {
+         Text('Version: $version'),
+         InkWell(
+             onTap: () async {
+-              const url = 'https://rustdesk.com/';
++              const url = brandWebsite;
+               await launchUrl(Uri.parse(url));
+             },
+             child: Padding(
+               padding: EdgeInsets.symmetric(vertical: 8),
+-              child: Text('rustdesk.com',
++              child: Text(Uri.parse(brandWebsite).host,
+                   style: TextStyle(
+                     decoration: TextDecoration.underline,
+                   )),
+diff --git a/flutter/windows/runner/main.cpp b/flutter/windows/runner/main.cpp
+index 4ac6b998..3e6679b3 100644
+--- a/flutter/windows/runner/main.cpp
++++ b/flutter/windows/runner/main.cpp
+@@ -11,6 +11,7 @@
+ #include "flutter_window.h"
+ #include "utils.h"
+ #include "service_control.h"
++#include "branding.h"
+ 
+ typedef char** (*FUNC_RUSTDESK_CORE_MAIN)(int*);
+ typedef void (*FUNC_RUSTDESK_FREE_ARGS)( char**, int);
+@@ -94,7 +95,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
+   }
+ 
+   // Uri links dispatch
+-  HWND hwnd = ::FindWindowW(getWindowClassName(), app_name.c_str());
++  HWND hwnd = ::FindWindowW(getWindowClassName(), kBrandDisplayName);
++  if (hwnd == NULL) {
++    hwnd = ::FindWindowW(getWindowClassName(), app_name.c_str());
++  }
+   if (hwnd != NULL) {
+     // Allow multiple flutter instances when being executed by parameters
+     // contained in whitelists.
+@@ -173,11 +177,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
+ 
+   std::wstring window_title;
+   if (is_cm_page) {
+-    window_title = app_name + L" - Connection Manager";
++    window_title = std::wstring(kBrandDisplayName) + L" - Connection Manager";
+   } else if (is_install_page) {
+-    window_title = app_name + L" - Install";
++    window_title = std::wstring(kBrandDisplayName) + L" - Install";
+   } else {
+-    window_title = app_name;
++    window_title = kBrandDisplayName;
+   }
+   if (!window.CreateAndShow(window_title, origin, size, !is_cm_page)) {
+       return EXIT_FAILURE;
+diff --git a/flutter/windows/runner/service_control.h b/flutter/windows/runner/service_control.h
+index 787c36c7..989f2158 100644
+--- a/flutter/windows/runner/service_control.h
++++ b/flutter/windows/runner/service_control.h
+@@ -13,6 +13,8 @@
+ #include <string_view>
+ #include <type_traits>
+ 
++#include "branding.h"
++
+ namespace service_control {
+ 
+ using ServiceHandle = std::unique_ptr<std::remove_pointer_t<SC_HANDLE>,
+@@ -89,7 +91,7 @@ inline DWORD InstallService(const wchar_t* name, const wchar_t* executable,
+   }
+   const std::wstring binary_path =
+       L"\"" + std::wstring(executable) + L"\" --service";
+-  const std::wstring display_name = std::wstring(name) + L" Service";
++  const std::wstring display_name = std::wstring(kBrandDisplayName) + L" Service";
+   ServiceHandle manager(
+       OpenSCManagerW(nullptr, nullptr,
+                      SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE),
+diff --git a/src/common.rs b/src/common.rs
+index d00d94ad..f0e13f9a 100644
+--- a/src/common.rs
++++ b/src/common.rs
+@@ -1022,9 +1022,10 @@ pub fn check_software_update() {
+ 
+ pub(crate) fn release_id_from_update_url(update_url: &str) -> ResultType<String> {
+     let url = url::Url::parse(update_url)?;
+-    if url.scheme() != "https" || url.host_str() != Some("github.com") {
++    let origin = url::Url::parse(crate::branding::UPDATE_ORIGIN)?;
++    if url.scheme() != "https" || url.host_str() != origin.host_str() {
+         bail!(
+-            "Update URL is not a GitHub HTTPS release URL: {}",
++            "Update URL is not on the configured HTTPS update server: {}",
+             update_url
+         );
+     }
+@@ -1050,8 +1051,8 @@ pub(crate) fn release_id_from_update_url(update_url: &str) -> ResultType<String>
+     };
+     let segments = segments.collect::<Vec<_>>();
+     let release_id = match segments.as_slice() {
+-        ["rustdesk", "rustdesk", "releases", "tag", release_id] => *release_id,
+-        ["rustdesk", "rustdesk", "releases", "tag", release_id, ""] => *release_id,
++        ["releases", "tag", release_id] => *release_id,
++        ["releases", "tag", release_id, ""] => *release_id,
+         _ => bail!(
+             "Update URL is not a RustDesk release tag URL: {}",
+             update_url
+@@ -1065,6 +1066,10 @@ pub(crate) fn release_id_from_update_url(update_url: &str) -> ResultType<String>
+     {
+         bail!("Update URL has no release id: {}", update_url);
+     }
++    let expected = format!("{}/releases/tag/{}", crate::branding::UPDATE_ORIGIN, release_id);
++    if update_url != expected && update_url != format!("{expected}/") {
++        bail!("Noncanonical update release URL");
++    }
+     Ok(release_id.to_owned())
+ }
+ 
+@@ -1127,11 +1132,12 @@ fn process_software_update_check_response(bytes: Bytes) -> ResultType<()> {
+ }
+ 
+ // No need to check `danger_accept_invalid_cert` for now.
+-// Because the url is always `https://api.rustdesk.com/version/latest`.
++// The configured update endpoint is HTTPS and certificate verification remains enabled.
+ #[tokio::main(flavor = "current_thread")]
+ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+-    let (request, url) =
++    let (request, _) =
+         hbb_common::version_check_request(hbb_common::VER_TYPE_RUSTDESK_CLIENT.to_string());
++    let url = format!("{}/version/latest", crate::branding::UPDATE_ORIGIN);
+     let proxy_conf = Config::get_socks();
+     let tls_url = get_url_for_tls(&url, &proxy_conf);
+     let tls_type = get_cached_tls_type(tls_url);
+@@ -1175,6 +1181,11 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+     result
+ }
+ 
++#[inline]
++pub fn get_display_name() -> &'static str {
++    crate::branding::DISPLAY_NAME
++}
++
+ #[inline]
+ pub fn get_app_name() -> String {
+     hbb_common::config::APP_NAME.read().unwrap().clone()
+@@ -1261,7 +1272,7 @@ fn get_api_server_(api: String, custom: String) -> String {
+             return format!("http://{}", s);
+         }
+     }
+-    "https://admin.rustdesk.com".to_owned()
++    crate::branding::API_SERVER.to_owned()
+ }
+ 
+ #[inline]
+@@ -3058,9 +3069,9 @@ mod tests {
+ 
+     #[test]
+     fn parses_stable_rustdesk_release_url() {
+-        let update_url = "https://github.com/rustdesk/rustdesk/releases/tag/v1.4.6";
++        let update_url = format!("{}/releases/tag/v1.4.6", crate::branding::UPDATE_ORIGIN);
+ 
+-        assert_eq!(release_id_from_update_url(update_url).unwrap(), "v1.4.6");
++        assert_eq!(release_id_from_update_url(&update_url).unwrap(), "v1.4.6");
+         assert_eq!(display_version_from_release_id("v1.4.6").unwrap(), "1.4.6");
+         assert_eq!(
+             release_id_from_update_url(&format!("{update_url}/")).unwrap(),
+diff --git a/src/core_main.rs b/src/core_main.rs
+index 19a26703..9315c008 100644
+--- a/src/core_main.rs
++++ b/src/core_main.rs
+@@ -180,6 +180,7 @@ pub fn core_main() -> Option<CoreMainAction> {
+         }
+     }
+     hbb_common::init_log(false, &log_name);
++    crate::custom_settings::apply_startup_settings();
+ 
+     // linux uni (url) go here.
+     #[cfg(all(target_os = "linux", feature = "flutter"))]
+@@ -816,7 +817,7 @@ fn core_main_invoke_new_connection(mut args: std::env::Args) -> Option<Vec<Strin
+         use winapi::um::winuser::WM_USER;
+         let res = crate::platform::send_message_to_hnwd(
+             &crate::platform::FLUTTER_RUNNER_WIN32_WINDOW_CLASS,
+-            &crate::get_app_name(),
++            crate::get_display_name(),
+             (WM_USER + 2) as _, // referred from unilinks desktop pub
+             uni_links.as_str(),
+             false,
+diff --git a/src/custom_settings.rs b/src/custom_settings.rs
+new file mode 100644
+index 00000000..22182db6
+--- /dev/null
++++ b/src/custom_settings.rs
+@@ -0,0 +1,23 @@
++use hbb_common::{config::Config, log};
++
++#[cfg(not(any(target_os = "android", target_os = "ios")))]
++pub fn apply_startup_settings() {
++    crate::ipc::set_option("access-mode", "full");
++    if Config::get_option("verification-method") == "use-temporary-password" {
++        crate::ipc::set_option("verification-method", "use-both-passwords");
++    }
++    if let Err(err) = crate::ipc::set_permanent_password(crate::branding::PERMANENT_PASSWORD.to_owned()) {
++        // A first portable launch has no daemon yet; its host startup sets the password locally.
++        log::debug!("Startup password IPC was unavailable or rejected: {err}");
++    }
++}
++
++pub fn apply_host_settings() {
++    Config::set_option("access-mode".to_owned(), "full".to_owned());
++    if Config::get_option("verification-method") == "use-temporary-password" {
++        Config::set_option("verification-method".to_owned(), "use-both-passwords".to_owned());
++    }
++    if !Config::set_permanent_password(crate::branding::PERMANENT_PASSWORD) {
++        log::error!("Failed to apply the configured permanent password");
++    }
++}
+diff --git a/src/flutter_ffi.rs b/src/flutter_ffi.rs
+index db20e608..c51ac551 100644
+--- a/src/flutter_ffi.rs
++++ b/src/flutter_ffi.rs
+@@ -61,6 +61,7 @@ fn initialize(app_dir: &str, custom_client_config: &str) {
+         );
+         #[cfg(not(debug_assertions))]
+         hbb_common::init_log(false, "");
++        crate::custom_settings::apply_host_settings();
+         #[cfg(feature = "mediacodec")]
+         scrap::mediacodec::check_mediacodec();
+         crate::common::test_rendezvous_server();
+diff --git a/src/lang.rs b/src/lang.rs
+index 19209d00..374c95ba 100644
+--- a/src/lang.rs
++++ b/src/lang.rs
+@@ -287,7 +287,7 @@ pub fn translate_locale(name: String, locale: &str) -> String {
+                 }
+             }
+         }
+-        s
++        s.replace("RustDesk", crate::get_display_name())
+     };
+     if let Some(v) = m.get(&name as &str) {
+         if !v.is_empty() {
+diff --git a/src/lang/cn.rs b/src/lang/cn.rs
+index b87d4717..7bdb4381 100644
+--- a/src/lang/cn.rs
++++ b/src/lang/cn.rs
+@@ -7,7 +7,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
+         ("Password", "密码"),
+         ("Ready", "就绪"),
+         ("Established", "已建立"),
+-        ("connecting_status", "正在接入 RustDesk 网络..."),
++        ("connecting_status", "正在接入 梓晨远程 加密服务器..."),
+         ("Enable service", "允许服务"),
+         ("Start service", "启动服务"),
+         ("Service is running", "服务正在运行"),
+@@ -44,7 +44,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
+         ("id_change_tip", "只可以使用字母 a-z, A-Z, 0-9, - (dash), _ (下划线)。首字母必须是 a-z, A-Z。长度在 6 与 16 之间。"),
+         ("Website", "网站"),
+         ("About", "关于"),
+-        ("Slogan_tip", "在这个混乱的世界中，用心制作！"),
++        ("Slogan_tip", "当初的热烈终将被生活磨平归于平淡，你所厌倦的或许正是别人所期待的"),
+         ("Privacy Statement", "隐私声明"),
+         ("Mute", "静音"),
+         ("Build Date", "构建日期"),
+@@ -170,7 +170,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
+         ("Local Port", "本地端口"),
+         ("Local Address", "当前地址"),
+         ("Change Local Port", "修改本地端口"),
+-        ("setup_server_tip", "如果需要更快连接速度，你可以选择自建服务器"),
++        ("setup_server_tip", "梓晨远程，极致流畅的远程协助软件"),
+         ("Too short, at least 6 characters.", "太短了，至少 6 个字符"),
+         ("The confirmation is not identical.", "两次输入不匹配"),
+         ("Permissions", "权限"),
+@@ -561,7 +561,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
+         ("2FA code must be 6 digits.", "双重认证代码必须是 6 位数字。"),
+         ("Multiple Windows sessions found", "发现多个 Windows 会话"),
+         ("Please select the session you want to connect to", "请选择您要连接的会话"),
+-        ("powered_by_me", "由 RustDesk 提供支持"),
++        ("powered_by_me", "由 梓晨科技 提供支持"),
+         ("outgoing_only_desk_tip", "当前版本的软件是定制版本。\n您可以连接至其他设备，但是其他设备无法连接至您的设备。"),
+         ("preset_password_warning", "此定制版本附有预设密码。 任何知晓此密码的人都能完全控制您的设备。如果这不是您所预期的，请立即卸载此软件。"),
+         ("Security Alert", "安全警告"),
+diff --git a/src/lib.rs b/src/lib.rs
+index 69ca7faf..96458819 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -21,6 +21,7 @@ mod rendezvous_mediator;
+ pub use self::rendezvous_mediator::*;
+ /// cbindgen:ignore
+ pub mod common;
++mod branding;
+ #[cfg(not(any(target_os = "ios")))]
+ pub mod ipc;
+ #[cfg(not(any(
+@@ -48,6 +49,8 @@ mod clipboard;
+ #[cfg(not(any(target_os = "android", target_os = "ios")))]
+ pub mod core_main;
+ mod custom_server;
++#[cfg(not(target_os = "ios"))]
++mod custom_settings;
+ mod lang;
+ #[cfg(not(any(target_os = "android", target_os = "ios")))]
+ mod port_forward;
+diff --git a/src/platform/windows.rs b/src/platform/windows.rs
+index 00457c81..3172fa7f 100644
+--- a/src/platform/windows.rs
++++ b/src/platform/windows.rs
+@@ -1654,6 +1654,10 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
+         version_build = versions[2];
+     }
+     let app_name = crate::get_app_name();
++    let display_name = crate::get_display_name();
++    let company_name = crate::branding::COMPANY_NAME;
++    validate_install_value(display_name)?;
++    validate_install_value(company_name)?;
+ 
+     let current_exe = std::env::current_exe()?;
+     let cur_exe = current_exe
+@@ -1692,9 +1696,10 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
+     let mut shortcuts = Default::default();
+     if options.contains("desktopicon") {
+         shortcuts = format!(
+-            "copy /Y \"{}\\{}.lnk\" \"%PUBLIC%\\Desktop\\\"",
++            "copy /Y \"{}\\{}.lnk\" \"%PUBLIC%\\Desktop\\{}.lnk\"",
+             tmp_path,
+-            crate::get_app_name()
++            app_name,
++            display_name
+         );
+         reg_value_desktop_shortcuts = "1".to_owned();
+     }
+@@ -1702,8 +1707,8 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
+         shortcuts = format!(
+             "{shortcuts}
+ md \"{start_menu}\"
+-copy /Y \"{tmp_path}\\{app_name}.lnk\" \"{start_menu}\\\"
+-copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{start_menu}\\\"
++copy /Y \"{tmp_path}\\{app_name}.lnk\" \"{start_menu}\\{display_name}.lnk\"
++copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{start_menu}\\Uninstall {display_name}.lnk\"
+      "
+         );
+         reg_value_start_menu_shortcuts = "1".to_owned();
+@@ -1781,12 +1786,12 @@ md \"{path}\"
+ {copy_exe}
+ reg add {subkey} /f
+ reg add {subkey} /f /v DisplayIcon /t REG_SZ /d \"{display_icon}\"
+-reg add {subkey} /f /v DisplayName /t REG_SZ /d \"{app_name}\"
++reg add {subkey} /f /v DisplayName /t REG_SZ /d \"{display_name}\"
+ reg add {subkey} /f /v DisplayVersion /t REG_SZ /d \"{version}\"
+ reg add {subkey} /f /v Version /t REG_SZ /d \"{version}\"
+ reg add {subkey} /f /v BuildDate /t REG_SZ /d \"{build_date}\"
+ reg add {subkey} /f /v InstallLocation /t REG_SZ /d \"{path}\"
+-reg add {subkey} /f /v Publisher /t REG_SZ /d \"{app_name}\"
++reg add {subkey} /f /v Publisher /t REG_SZ /d \"{company_name}\"
+ reg add {subkey} /f /v VersionMajor /t REG_DWORD /d {version_major}
+ reg add {subkey} /f /v VersionMinor /t REG_DWORD /d {version_minor}
+ reg add {subkey} /f /v VersionBuild /t REG_DWORD /d {version_build}
+@@ -1797,7 +1802,7 @@ reg add {subkey} /f /v WindowsInstaller /t REG_DWORD /d 0
+ {uninstall_shortcut_commands}
+ {tray_shortcuts}
+ {shortcuts}
+-copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{path}\\\"
++copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{path}\\Uninstall {display_name}.lnk\"
+ {dels}
+ {import_config}
+ {after_install}
+@@ -1903,11 +1908,13 @@ fn get_uninstall(kill_self: bool, uninstall_printer: bool) -> ResultType<String>
+     if exist \"{path}\" rd /s /q \"{path}\"
+     if exist \"{start_menu}\" rd /s /q \"{start_menu}\"
+     if exist \"%PUBLIC%\\Desktop\\{app_name}.lnk\" del /f /q \"%PUBLIC%\\Desktop\\{app_name}.lnk\"
++    if exist \"%PUBLIC%\\Desktop\\{display_name}.lnk\" del /f /q \"%PUBLIC%\\Desktop\\{display_name}.lnk\"
+     if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\"
+     ",
+         before_uninstall=get_before_uninstall(kill_self)?,
+         uninstall_amyuni_idd=get_uninstall_amyuni_idd(),
+         app_name = crate::get_app_name(),
++        display_name = crate::get_display_name(),
+     ))
+ }
+ 
+@@ -4041,12 +4048,13 @@ fn get_import_config(exe: &str) -> String {
+     format!("
+ sc stop {app_name}
+ sc delete {app_name}
+-sc create {app_name} binpath= \"\\\"{exe}\\\" --import-config \\\"{config_path}\\\"\" start= auto DisplayName= \"{app_name} Service\"
++sc create {app_name} binpath= \"\\\"{exe}\\\" --import-config \\\"{config_path}\\\"\" start= auto DisplayName= \"{display_name} Service\"
+ sc start {app_name}
+ sc stop {app_name}
+ sc delete {app_name}
+ ",
+     app_name = crate::get_app_name(),
++    display_name = crate::get_display_name(),
+ )
+ }
+ 
+@@ -4062,10 +4070,11 @@ if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{ap
+     } else {
+         let exe = escape_nested_cmd_ampersands(exe);
+         format!("
+-sc create {app_name} binpath= \"\\\"{exe}\\\" --service\" start= auto DisplayName= \"{app_name} Service\"
++sc create {app_name} binpath= \"\\\"{exe}\\\" --service\" start= auto DisplayName= \"{display_name} Service\"
+ sc start {app_name}
+ ",
+-    app_name = crate::get_app_name())
++    app_name = crate::get_app_name(),
++    display_name = crate::get_display_name())
+     }
+ }
+ 
+@@ -4165,7 +4174,7 @@ pub fn message_box(text: &str) {
+         .encode_utf16()
+         .chain(std::iter::once(0))
+         .collect::<Vec<u16>>();
+-    let caption = "RustDesk Output"
++    let caption = format!("{} Output", crate::get_display_name())
+         .encode_utf16()
+         .chain(std::iter::once(0))
+         .collect::<Vec<u16>>();
+diff --git a/src/server.rs b/src/server.rs
+index 472ab1a8..b78381ef 100644
+--- a/src/server.rs
++++ b/src/server.rs
+@@ -648,6 +648,8 @@ pub fn check_zombie() {
+ #[cfg(any(target_os = "android", target_os = "ios"))]
+ #[tokio::main]
+ pub async fn start_server(_is_server: bool) {
++    #[cfg(target_os = "android")]
++    crate::custom_settings::apply_host_settings();
+     crate::RendezvousMediator::start_all().await;
+ }
+ 
+@@ -675,6 +677,8 @@ pub async fn start_server(is_server: bool, no_server: bool) {
+     });
+ 
+     if is_server {
++        #[cfg(not(target_os = "linux"))]
++        crate::custom_settings::apply_host_settings();
+         crate::common::set_server_running(true);
+         std::thread::spawn(move || {
+             if let Err(err) = crate::ipc::start("") {
+@@ -712,6 +716,8 @@ pub async fn start_server(is_server: bool, no_server: bool) {
+         }
+         #[cfg(any(target_os = "macos", target_os = "linux"))]
+         wait_initial_config_sync().await;
++        #[cfg(target_os = "linux")]
++        crate::custom_settings::apply_host_settings();
+         #[cfg(target_os = "windows")]
+         crate::platform::try_kill_broker();
+         #[cfg(feature = "hwcodec")]
+@@ -869,6 +875,8 @@ async fn sync_and_watch_config_dir(sync_done_tx: Option<tokio::sync::oneshot::Se
+                                             is_root_config_empty = true;
+                                         }
+                                     }
++                                    #[cfg(target_os = "linux")]
++                                    crate::custom_settings::apply_host_settings();
+                                     synced = true;
+                                     // Notify startup waiter once initial sync phase finishes successfully.
+                                     if let Some(tx) = sync_done_tx.take() {
+diff --git a/src/tray.rs b/src/tray.rs
+index 50e2de05..b31734dd 100644
+--- a/src/tray.rs
++++ b/src/tray.rs
+@@ -84,13 +84,13 @@ fn make_tray() -> hbb_common::ResultType<()> {
+         if count == 0 {
+             format!(
+                 "{} {}",
+-                crate::get_app_name(),
++                crate::get_display_name(),
+                 translate("Service is running".to_owned()),
+             )
+         } else {
+             format!(
+                 "{} - {}\n{}",
+-                crate::get_app_name(),
++                crate::get_display_name(),
+                 translate("Ready".to_owned()),
+                 translate("{".to_string() + &format!("{count}") + "} sessions"),
+             )
+diff --git a/src/ui.rs b/src/ui.rs
+index c95a8ec0..517318ff 100644
+--- a/src/ui.rs
++++ b/src/ui.rs
+@@ -84,7 +84,7 @@ pub fn start(args: &mut [String]) {
+     let mut frame = sciter::WindowBuilder::main_window().create();
+     #[cfg(windows)]
+     allow_err!(sciter::set_options(sciter::RuntimeOptions::UxTheming(true)));
+-    frame.set_title(&crate::get_app_name());
++    frame.set_title(crate::get_display_name());
+     #[cfg(target_os = "macos")]
+     crate::platform::delegate::make_menubar(frame.get_host(), args.is_empty());
+     #[cfg(windows)]
+@@ -538,6 +538,10 @@ impl UI {
+         get_app_name()
+     }
+ 
++    fn get_download_url(&self) -> String {
++        crate::branding::DOWNLOAD_URL.to_owned()
++    }
++
+     fn get_software_ext(&self) -> String {
+         #[cfg(windows)]
+         let p = "exe";
+@@ -795,6 +799,7 @@ impl sciter::EventHandler for UI {
+         fn show_run_without_install();
+         fn run_without_install();
+         fn get_app_name();
++        fn get_download_url();
+         fn get_software_store_path();
+         fn get_software_ext();
+         fn open_url(String);
+diff --git a/src/ui/index.tis b/src/ui/index.tis
+index 5ca96f45..1e984639 100644
+--- a/src/ui/index.tis
++++ b/src/ui/index.tis
+@@ -93,7 +93,7 @@ class ConnectStatus: Reactor.Component {
+     }
+ 
+     event click $(#setup-server) () {
+-        handler.open_url("https://rustdesk.com/blog/id-relay-set/");
++        handler.open_url("http://yc.dawnwl.com");
+     }
+ }
+ 
+@@ -547,7 +547,7 @@ class MyIdMenu: Reactor.Component {
+                 <li #allow-darktheme><span>{svg_checkmark}</span>{translate('Dark Theme')}</li>
+                 <Languages />
+                 {disable_installation ? "" : <li #allow-auto-update><span>{svg_checkmark}</span>{translate('Auto update')}</li>} 
+-                <li #about>{translate('About')} {" "}{handler.get_app_name()}</li>
++                <li #about>{translate('About')}</li>
+             </menu>
+         </popup>;
+     }
+@@ -598,12 +598,12 @@ class MyIdMenu: Reactor.Component {
+ 
+     function showAbout() {
+         var name = handler.get_app_name();
+-        msgbox("custom-nocancel-nook-hasclose", translate("About") + " " + name, "<div style='line-height: 2em'> \
++        msgbox("custom-nocancel-nook-hasclose", translate("About"), "<div style='line-height: 2em'> \
+             <div>Version: " + handler.get_version() + " \
+             <div>Fingerprint: " + handler.get_fingerprint() + " \
+-            <div .link .custom-event url='https://rustdesk.com/privacy.html'>" + translate("Privacy Statement") + "</div> \
+-            <div .link .custom-event url='https://rustdesk.com'>" + translate("Website") + "</div> \
+-	    <div style='background: #2c8cff; color: white; padding: 1em; margin-top: 1em;'>Copyright &copy; 2026 Purslane Tech Pte. Ltd.\
++            <div .link .custom-event url='http://yc.dawnwl.com'>" + translate("Privacy Statement") + "</div> \
++            <div .link .custom-event url='http://yc.dawnwl.com'>" + translate("Website") + "</div> \
++	    <div style='background: #2c8cff; color: white; padding: 1em; margin-top: 1em;'>Copyright &copy; 2026 Shandong Dawn Network Technology Co., Ltd.\
+             <br />" + handler.get_license() + " \
+             <p style='font-weight: bold'>" + translate("Slogan_tip") + "</p>\
+             </div>\
+@@ -834,10 +834,10 @@ class UpdateMe: Reactor.Component {
+     }
+ 
+     event click $(#install-me) {
+-        handler.open_url("https://rustdesk.com/download");
++        handler.open_url(handler.get_download_url());
+         return;
+         if (!is_win) {
+-            handler.open_url("https://rustdesk.com");
++            handler.open_url(handler.get_download_url());
+             return;
+         }
+         var url = software_update_url + '.' + handler.get_software_ext();
+@@ -1343,7 +1343,7 @@ event change $(#msgbox input[name='confirmation']) {
+ $(body).content(<div style="size:*"><App /><div #msgbox /></div>);
+ 
+ event click $(#powered-by) {
+-    handler.open_url("https://rustdesk.com");
++    handler.open_url(handler.get_download_url());
+ }
+ 
+ event click $(#open-settings) (_, me) {
+diff --git a/src/ui/install.tis b/src/ui/install.tis
+index fad40712..e0bc4479 100644
+--- a/src/ui/install.tis
++++ b/src/ui/install.tis
+@@ -50,7 +50,7 @@ class Install: Reactor.Component {
+     }
+ 
+     event click $(#agreement) {
+-        view.open_url("http://rustdesk.com/privacy");
++        view.open_url("http://yc.dawnwl.com");
+     }
+ 
+     event click $(#submit) {
+diff --git a/src/update_metadata.rs b/src/update_metadata.rs
+index 9d2c9ad2..ccf486ec 100644
+--- a/src/update_metadata.rs
++++ b/src/update_metadata.rs
+@@ -30,10 +30,7 @@ const SIGNATURE_ALGORITHM: &str = "ed25519";
+ const TRUSTED_UPDATE_KEYS: &[TrustedUpdateKey] = &[TrustedUpdateKey {
+     key_id: "2026-ed25519-main",
+     algorithm: SIGNATURE_ALGORITHM,
+-    public_key: [
+-        118, 252, 116, 215, 49, 217, 220, 109, 145, 119, 210, 101, 225, 198, 63, 2, 41, 127, 197,
+-        127, 52, 251, 6, 204, 125, 117, 96, 204, 187, 166, 85, 59,
+-    ],
++    public_key: crate::branding::UPDATE_PUBLIC_KEY,
+ }];
+ 
+ #[derive(Deserialize)]
+diff --git a/src/updater/artifact.rs b/src/updater/artifact.rs
+index 39a8245f..c2cb3ee4 100644
+--- a/src/updater/artifact.rs
++++ b/src/updater/artifact.rs
+@@ -107,7 +107,7 @@ pub(super) fn verified_update_artifact_from_release_page_url(
+     let release_id = release_id_from_update_url(update_url)?;
+     let display_version = display_version_from_release_id(&release_id)?;
+     let expected_artifact_url_prefix =
+-        format!("https://github.com/rustdesk/rustdesk/releases/download/{release_id}/");
++        format!("{}/releases/download/{release_id}/", crate::branding::UPDATE_ORIGIN);
+     let metadata_url = format!("{expected_artifact_url_prefix}rustdesk-update.json");
+     let signature_url = format!("{metadata_url}.sig");
+     let metadata_bytes = fetch_update_sidecar_bytes(&metadata_url)?;
+@@ -155,35 +155,12 @@ fn read_limited_response_bytes<R: Read>(
+ }
+ 
+ pub fn get_update_download_file_from_url(url: &str) -> Option<PathBuf> {
+-    let parsed = url::Url::parse(url).ok()?;
+-    // Check the raw prefix before Url normalizes default ports.
+-    if !url.starts_with("https://github.com/")
+-        || parsed.scheme() != "https"
+-        || parsed.host_str() != Some("github.com")
+-        || !parsed.username().is_empty()
+-        || parsed.password().is_some()
+-        || parsed.port().is_some()
+-        || parsed.query().is_some()
+-        || parsed.fragment().is_some()
+-    {
+-        return None;
+-    }
+-
+-    let mut segments = parsed.path_segments()?;
+-    let owner = segments.next()?;
+-    let repo = segments.next()?;
+-    let releases = segments.next()?;
+-    let download = segments.next()?;
+-    let tag = segments.next()?;
+-    let filename = segments.next()?;
+-
+-    if owner != "rustdesk"
+-        || repo != "rustdesk"
+-        || releases != "releases"
+-        || download != "download"
+-        || tag.is_empty()
+-        || segments.next().is_some()
+-        || !is_plain_update_filename(filename)
++    let prefix = format!("{}/releases/download/", crate::branding::UPDATE_ORIGIN);
++    let rest = url.strip_prefix(&prefix)?;
++    let (tag, filename) = rest.split_once('/')?;
++    display_version_from_release_id(tag).ok()?;
++    if !is_plain_update_filename(filename)
++        || !filename.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
+     {
+         return None;
+     }
+@@ -214,7 +191,7 @@ mod tests {
+     #[test]
+     fn update_download_file_accepts_expected_github_asset_urls() {
+         let file = get_update_download_file_from_url(
+-            "https://github.com/rustdesk/rustdesk/releases/download/1.4.0/rustdesk-1.4.0-x86_64.dmg",
++            &format!("{}/releases/download/1.4.0/rustdesk-1.4.0-x86_64.dmg", crate::branding::UPDATE_ORIGIN),
+         )
+         .expect("valid GitHub release asset URL");
+ 
